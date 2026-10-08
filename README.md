@@ -1,277 +1,310 @@
-AI Search Algorithm Lab – Tic-Tac-Toe
+# AI Search Algorithm Lab – Tic-Tac-Toe
 
-Project Description
+## 1. Greedy Best-First Search
 
-AI Search Algorithm Lab is an interactive web application that demonstrates Artificial Intelligence search techniques through a Tic-Tac-Toe game.
+### Explanation
 
-The application provides a game board where users can play and explore how different search algorithms select possible moves. It also provides information about algorithm decisions and game results.
+Greedy Best-First Search is an informed search algorithm that selects the next state based on a heuristic function. It chooses the state that appears most promising according to the heuristic value.
 
-The project is developed using Python and Streamlit.
+In Tic-Tac-Toe, a heuristic can evaluate possible moves by considering winning opportunities, blocking the opponent, and controlling useful positions on the board.
 
-Objectives
-
-- To understand heuristic search techniques through a practical example.
-- To explore how AI evaluates possible game states.
-- To compare different search strategies.
-- To provide an interactive environment for learning AI search algorithms.
-
-Search Algorithms
-
-1. Greedy Best-First Search
-
-Definition:
-
-Greedy Best-First Search is an informed search algorithm that selects the next state based on a heuristic function. It chooses the state that appears most promising according to the estimated value of the heuristic.
-
-Working Principle:
+### Algorithm
 
 1. Start with the current game state.
-2. Generate the possible next moves.
-3. Evaluate the resulting states using a heuristic function.
-4. Select the state with the most promising heuristic value.
-5. Continue until the goal is reached or the search stops.
+2. Generate all possible next moves.
+3. Evaluate each resulting state using a heuristic function.
+4. Select the state with the best heuristic value.
+5. Continue until a goal state is reached or no states remain.
 
-Pseudocode:
+### Python Code
 
-GreedyBestFirstSearch(initial_state):
-    Create a priority queue
-    Add initial_state to the queue
+```python
+import heapq
 
-    while queue is not empty:
-        current = state with best heuristic value
+def greedy_best_first_search(start, goal, graph, heuristic):
+    priority_queue = []
+    heapq.heappush(priority_queue, (heuristic[start], start))
+    visited = set()
 
-        if current is a goal:
-            return current
+    while priority_queue:
+        _, current = heapq.heappop(priority_queue)
 
-        Generate possible next states
+        if current in visited:
+            continue
 
-        for each next_state:
-            Evaluate heuristic(next_state)
-            Add next_state to the queue
+        visited.add(current)
 
-    return failure
+        if current == goal:
+            return visited
 
-Key Point: Greedy Best-First Search focuses on the estimated desirability of a state. It does not necessarily find the optimal solution.
+        for neighbor in graph.get(current, []):
+            if neighbor not in visited:
+                heapq.heappush(
+                    priority_queue,
+                    (heuristic[neighbor], neighbor)
+                )
 
-2. A* Search
+    return None
 
-Definition:
 
-A* Search is an informed search algorithm that evaluates states using both the cost already incurred and the estimated cost remaining to reach the goal.
+graph = {
+    'A': ['B', 'C'],
+    'B': ['D', 'E'],
+    'C': ['F'],
+    'D': [],
+    'E': [],
+    'F': []
+}
+
+heuristic = {
+    'A': 5,
+    'B': 3,
+    'C': 2,
+    'D': 4,
+    'E': 0,
+    'F': 1
+}
+
+print(greedy_best_first_search('A', 'E', graph, heuristic))
+```
+
+## 2. A* Search
+
+### Explanation
+
+A* Search is an informed search algorithm that uses both the cost already incurred and the estimated cost remaining to reach the goal.
 
 Its evaluation function is:
 
-"f(n) = g(n) + h(n)"
+**f(n) = g(n) + h(n)**
 
-Where:
+* `g(n)` represents the cost from the initial state to the current state.
+* `h(n)` represents the estimated cost from the current state to the goal.
+* `f(n)` represents the estimated total cost.
 
-- "g(n)" is the cost from the initial state to the current state.
-- "h(n)" is the estimated cost from the current state to the goal.
-- "f(n)" is the estimated total cost of the solution through that state.
+A* selects the state with the lowest evaluation value.
 
-Working Principle:
+### Algorithm
 
 1. Add the initial state to the priority queue.
-2. Calculate the evaluation value for available states.
-3. Select the state with the lowest "f(n)" value.
-4. Expand the selected state and generate its successors.
-5. Update the costs and parent information when a better path is found.
-6. Continue until the goal is reached or no states remain.
+2. Set the initial path cost to zero.
+3. Select the state with the lowest `f(n)` value.
+4. Check whether the selected state is the goal.
+5. Generate successor states and calculate their costs.
+6. Update the costs when a better path is found.
+7. Repeat until the goal is found or the queue becomes empty.
 
-Pseudocode:
+### Python Code
 
-AStarSearch(initial_state):
-    Add initial_state to the priority queue
-    Set g(initial_state) = 0
+```python
+import heapq
 
-    while queue is not empty:
-        current = state with lowest f(n)
+def a_star_search(start, goal, graph, heuristic):
+    priority_queue = [(heuristic[start], 0, start)]
+    cost = {start: 0}
+    parent = {start: None}
 
-        if current is a goal:
-            return solution path
+    while priority_queue:
+        _, current_cost, current = heapq.heappop(priority_queue)
 
-        for each successor of current:
-            Calculate tentative g value
+        if current_cost != cost[current]:
+            continue
 
-            if the path is better:
-                Update g(successor)
-                Calculate f = g + h
-                Add or update successor in queue
+        if current == goal:
+            path = []
 
-    return failure
+            while current is not None:
+                path.append(current)
+                current = parent[current]
 
-Key Point: A* considers both the cost so far and the estimated remaining cost. Under the appropriate conditions, it can find an optimal solution.
+            return path[::-1]
 
-3. AO* Search
+        for neighbor, edge_cost in graph.get(current, []):
+            new_cost = cost[current] + edge_cost
 
-Definition:
+            if neighbor not in cost or new_cost < cost[neighbor]:
+                cost[neighbor] = new_cost
+                parent[neighbor] = current
 
-AO* Search is a heuristic search algorithm designed for AND-OR graphs. It is useful when solving a problem may require choosing between alternatives or completing multiple subproblems.
+                f_value = new_cost + heuristic[neighbor]
+                heapq.heappush(
+                    priority_queue,
+                    (f_value, new_cost, neighbor)
+                )
 
-- OR node: Selecting one suitable child may be sufficient.
-- AND node: All required child subproblems must be solved.
+    return None
 
-Working Principle:
 
-1. Begin with the initial problem node.
-2. Use heuristic values to estimate the cost of solving the problem.
-3. Select the most promising partial solution.
-4. Expand an unsolved node.
-5. Update the estimated costs of its parent nodes.
-6. Mark solved nodes and propagate the updates.
-7. Continue until the initial problem is solved or no solution is available.
+graph = {
+    'A': [('B', 1), ('C', 4)],
+    'B': [('D', 2), ('E', 5)],
+    'C': [('E', 1)],
+    'D': [('E', 1)],
+    'E': []
+}
 
-Pseudocode:
+heuristic = {
+    'A': 3,
+    'B': 2,
+    'C': 1,
+    'D': 1,
+    'E': 0
+}
 
-AOStarSearch(initial_node):
-    Initialize heuristic values
+print(a_star_search('A', 'E', graph, heuristic))
+```
 
-    while initial_node is not solved:
-        Select the most promising unsolved node
-        Expand the selected node
-        Evaluate its successors
+## 3. AO* Search
 
-        Update parent cost estimates
-        Mark solved nodes
+### Explanation
 
-    return solution graph
+AO* Search is a heuristic search algorithm designed for AND-OR graphs.
 
-Key Point: AO* searches for a solution graph rather than necessarily a single path. Its cost calculations depend on whether a node represents an AND choice or an OR choice.
+* **OR node:** One suitable child is enough to solve the node.
+* **AND node:** All required child nodes must be solved.
 
-4. Memory-Bounded Heuristic Search
+AO* selects promising partial solutions and updates estimated costs as the search progresses. It is useful for problems that can be divided into subproblems.
 
-Definition:
+### Algorithm
 
-Memory-bounded heuristic search refers to heuristic search methods that limit memory consumption while exploring possible states. They are useful when traditional search algorithms require too much memory.
+1. Start with the initial problem node.
+2. Assign heuristic estimates to the nodes.
+3. Select the most promising unsolved node.
+4. Expand the selected node.
+5. Calculate the costs of its alternatives.
+6. For an OR node, select the least-cost alternative.
+7. For an AND node, combine the costs of all required children.
+8. Update parent costs and continue until the initial node is solved.
 
-Examples include Simplified Memory-Bounded A* (SMA*) and Recursive Best-First Search (RBFS).
+### Python Code
 
-Working Principle:
+```python
+def ao_star(graph, heuristic, start):
+    solution = {}
+
+    def solve(node):
+        if node not in graph or not graph[node]:
+            return heuristic[node]
+
+        best_cost = float("inf")
+        best_child = None
+
+        for option in graph[node]:
+            if isinstance(option, list):
+                cost = sum(solve(child) for child in option)
+            else:
+                cost = solve(option)
+
+            if cost < best_cost:
+                best_cost = cost
+                best_child = option
+
+        solution[node] = best_child
+        heuristic[node] = best_cost
+
+        return best_cost
+
+    total_cost = solve(start)
+    return total_cost, solution
+
+
+graph = {
+    'A': [['B', 'C'], ['D']],
+    'B': [],
+    'C': [],
+    'D': []
+}
+
+heuristic = {
+    'A': 10,
+    'B': 2,
+    'C': 3,
+    'D': 7
+}
+
+cost, solution = ao_star(graph, heuristic, 'A')
+
+print("Solution cost:", cost)
+print("Selected solution:", solution)
+```
+
+## 4. Memory-Bounded Heuristic Search
+
+### Explanation
+
+Memory-bounded heuristic search refers to search techniques that limit memory usage while exploring states. Examples include Simplified Memory-Bounded A* (SMA*) and Recursive Best-First Search (RBFS).
+
+These methods are useful when a search problem has too many states to store in memory. Depending on the method, less promising states may be discarded while information is retained to reconsider alternatives later.
+
+### Algorithm
 
 1. Start from the initial state.
 2. Evaluate states using path cost and heuristic information.
-3. Expand promising states.
-4. Monitor the available memory.
-5. When memory is limited, remove or forget less promising states according to the selected method.
-6. Retain sufficient information to revisit alternatives when necessary.
-7. Continue searching until a solution is found or the search fails.
+3. Select a promising state for expansion.
+4. Generate successor states.
+5. Check whether the memory limit has been reached.
+6. If necessary, discard a less promising state according to the chosen method.
+7. Preserve enough information to reconsider alternatives.
+8. Continue until a solution is found or the search fails.
 
-Pseudocode:
+### Python Code
 
-MemoryBoundedSearch(initial_state):
-    Initialize the search frontier
+The following is a simplified memory-limited heuristic search demonstration. It is **not a complete implementation of SMA* or RBFS**.
 
-    while a solution has not been found:
-        Select a promising state
-        Expand the selected state
+```python
+import heapq
 
-        if the memory limit is reached:
-            Remove a less promising state
-            Preserve information for reconsideration
+def memory_limited_search(graph, heuristic, start, goal, limit):
+    frontier = [(heuristic[start], start)]
+    visited = set()
 
-        Update evaluation values
+    while frontier:
+        _, current = heapq.heappop(frontier)
 
-    return solution or failure
+        if current in visited:
+            continue
 
-Key Point: Memory-bounded search methods trade memory usage against search effort. Their completeness and optimality depend on the particular algorithm and its conditions.
+        visited.add(current)
 
-Application Workflow
+        if current == goal:
+            return current
 
-1. Open the application.
-2. Select the required search algorithm from the interface.
-3. View the Tic-Tac-Toe game board.
-4. Make a move using an available cell.
-5. Observe the AI's response and any displayed algorithm information.
-6. Continue until the game reaches a terminal state.
-7. Review the result and game statistics provided by the application.
+        for neighbor in graph.get(current, []):
+            if neighbor not in visited:
+                heapq.heappush(
+                    frontier,
+                    (heuristic[neighbor], neighbor)
+                )
 
-Sample Output
+        # Keep only the most promising states.
+        if len(frontier) > limit:
+            frontier = heapq.nsmallest(limit, frontier)
+            heapq.heapify(frontier)
 
-The application is expected to display the following types of results, depending on the implemented features:
+    return None
 
-- Interactive Tic-Tac-Toe game board.
-- Selected search algorithm.
-- AI decision or heuristic information, if supported.
-- Game status such as win, loss, or draw.
-- Game statistics, if implemented.
 
-Note: The actual output depends on the features implemented in the application. Add screenshots of the running application below.
+graph = {
+    'A': ['B', 'C'],
+    'B': ['D', 'E'],
+    'C': ['F'],
+    'D': [],
+    'E': [],
+    'F': []
+}
 
-Application Screenshot
+heuristic = {
+    'A': 5,
+    'B': 3,
+    'C': 2,
+    'D': 4,
+    'E': 0,
+    'F': 1
+}
 
-Add a screenshot of the main game interface here.
+print(memory_limited_search(graph, heuristic, 'A', 'E', 2))
+```
 
-Algorithm Output
+## Conclusion
 
-Add screenshots showing the algorithm selection and its corresponding output here.
-
-Technologies Used
-
-- Python
-- Streamlit
-- Artificial Intelligence search techniques
-- Git and GitHub
-- Streamlit Community Cloud for deployment
-
-Project Structure
-
-tic_tac_toe-/
-│
-├── app.py
-├── requirements.txt
-├── README.md
-└── .gitignore
-
-The project structure above is an example based on the main application and dependency files. Keep the filenames consistent with the actual repository.
-
-Installation and Execution
-
-Prerequisites
-
-- Python installed on the system.
-- Git installed on the system.
-- Required Python libraries listed in "requirements.txt".
-
-Steps
-
-1. Clone the repository
-
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-
-2. Move into the project directory
-
-cd tic_tac_toe-
-
-3. Install dependencies
-
-pip install -r requirements.txt
-
-4. Run the application
-
-python -m streamlit run app.py
-
-The application will start on a local address provided by Streamlit. Open that address in a browser to use the application locally.
-
-Live Demo
-
-Try the deployed application here:
-
-"Open AI Search Algorithm Lab" (YOUR_STREAMLIT_APP_URL)
-
-Replace the placeholder with the public Streamlit URL of the deployed application.
-
-Future Improvements
-
-- Display the sequence of states explored by each algorithm.
-- Show heuristic values for possible moves.
-- Provide a step-by-step visualization of search decisions.
-- Compare the number of explored states and execution time.
-- Add more AI search problems and game environments.
-
-Conclusion
-
-This project provides an interactive way to explore Artificial Intelligence search techniques using Tic-Tac-Toe. It connects theoretical concepts with a practical application and helps learners understand how different search strategies evaluate possible states and make decisions.
-
-Author
-
-Developed as an Artificial Intelligence Search Algorithm Lab project.
+This project explores four heuristic search techniques: Greedy Best-First Search, A* Search, AO* Search, and Memory-Bounded Heuristic Search. These algorithms demonstrate different approaches to evaluating states, selecting promising alternatives, and managing the search process. The examples provide a foundation for understanding AI search concepts through practical Python programs.
